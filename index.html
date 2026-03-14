@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rose Curve Explorer</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
+        canvas { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: 20px; }
+        .controls { background: white; padding: 20px; border-radius: 8px; width: 400px; }
+        .control-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; }
+        .stats { font-family: monospace; color: #555; background: #eee; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2>Rose Curve Explorer: $r = \cos(m\theta)$</h2>
+    <canvas id="roseCanvas" width="500" height="500"></canvas>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label id="mLabel">Parameter m: 3</label>
+            <input type="range" id="mSlider" min="1" max="10" step="0.1" value="3">
+        </div>
+        <div class="control-group">
+            <label id="thetaLabel">Current &theta; (Radians): 0</label>
+            <input type="range" id="thetaSlider" min="0" max="12.57" step="0.01" value="0">
+        </div>
+        <div class="stats" id="coords">
+            Point: (x, y) = (0.00, 0.00)
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('roseCanvas');
+        const ctx = canvas.getContext('2d');
+        const mSlider = document.getElementById('mSlider');
+        const thetaSlider = document.getElementById('thetaSlider');
+        const mLabel = document.getElementById('mLabel');
+        const thetaLabel = document.getElementById('thetaLabel');
+        const coordsDiv = document.getElementById('coords');
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const scale = 200;
+
+        function draw() {
+            const m = parseFloat(mSlider.value);
+            const currentTheta = parseFloat(thetaSlider.value);
+            
+            mLabel.innerText = `Parameter m: ${m}`;
+            thetaLabel.innerText = `Current θ (Radians): ${currentTheta.toFixed(2)}`;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 畫座標軸
+            ctx.strokeStyle = '#ddd';
+            ctx.beginPath();
+            ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+
+            // 畫完整的玫瑰線
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let t = 0; t <= Math.PI * 4; t += 0.01) {
+                let r = Math.cos(m * t);
+                let x = centerX + r * Math.cos(t) * scale;
+                let y = centerY - r * Math.sin(t) * scale;
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 畫當前的點
+            let r_curr = Math.cos(m * currentTheta);
+            let x_curr = r_curr * Math.cos(currentTheta);
+            let y_curr = r_curr * Math.sin(currentTheta);
+            
+            let canvasX = centerX + x_curr * scale;
+            let canvasY = centerY - y_curr * scale;
+
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.arc(canvasX, canvasY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 畫半徑向量
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(canvasX, canvasY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            coordsDiv.innerText = `Polar: (r, θ) = (${r_curr.toFixed(2)}, ${currentTheta.toFixed(2)})\nCartesian: (x, y) = (${x_curr.toFixed(2)}, ${y_curr.toFixed(2)})`;
+        }
+
+        mSlider.oninput = draw;
+        thetaSlider.oninput = draw;
+        draw();
+    </script>
+</body>
+</html>
